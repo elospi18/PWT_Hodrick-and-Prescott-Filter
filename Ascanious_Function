@@ -1,0 +1,37 @@
+ascanious<- function(country){  #Country is a Character with the ISO Name of each one of the countries in PWT codes.xlsx dataset
+  library(readxl)
+  data1 <- read_excel("~/Ascanio.xlsx")
+
+  library(mFilter)
+  data1$pibcapita<-data1$q_gdp/data1$pop
+  x<-as.data.frame(data1$pibcapita[data1$countrycode==country])
+  x$year<-data1$year[data1$countrycode==country]
+  x$avh<- data1$avh[data1$countrycode==country] #AVH for country Average Country Worked Hours, but you can modify this variable for any in the data set
+  
+  x<-x[complete.cases(x)==TRUE,]
+  colnames(x)<-c("pibc","year","avh")
+  # Filtro de HP para el promedio de horas trabajadas en la economía y HP pib percapita
+  hpavh<-hpfilter(x$avh,freq = 100,type = "lambda")
+  awh<-hpavh$trend
+  
+  hppib<-hpfilter(x$pibc,freq = 100,type = "lambda") #Esta es una variable la serie de PIB filtrada por HP
+  #hppib es una lista en donde existe un vector "cycle" para el componente cíclico y "trend"
+  x$pibchp<-hppib$trend
+  
+  par(mar=c(5,4,4,6)+0.1)
+  par(mfrow=c(1,1))
+  plot(x$year,awh,col="green",type="l", ylab = "",xlab = "",main = print(country))
+  #axis(2,las=1)
+  #mtext("",side = 2,line = 4 )
+  par(new=TRUE)
+  plot(x$year,x$pibchp,axes = FALSE,type="l",ylab = "Average Working Hours",xlab = "Year")
+  mtext("PIB per Capita",ylim=c(0,x$pibchp[which.max(x$pibchp),]),side = 4,line = 4 )
+  axis(4,ylim=c(0,x$pibchp[which.max(x$pibchp),]),las=1)
+  ## Plot the second plot and put axis scale on right
+  #plot(time, cell.density, pch=15,  xlab="", ylab="", ylim=c(0,x$pibchp[which.max(x$pibchp),]), 
+       #axes=FALSE, type="b", col="red")
+  
+}
+
+#Example
+ascanious("HKG") #Graphs the de PIB per Capita filtred by Hodrick and Prescott Filter and de Average Working Hours for Hong Kong "HKG" 
